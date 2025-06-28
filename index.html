@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Runtime CSS Generator with Regex Token Extraction</title>
+
+    <style>
+      html,
+      body {
+        margin: 0;
+        padding: 0;
+      }
+      .test-result {
+        margin-top: 1em;
+        font-family: monospace;
+      }
+      .pass {
+        color: green;
+      }
+      .fail {
+        color: red;
+      }
+    </style>
+    <script src="cssr.js"></script>
+  </head>
+  <body>
+    <!-- Elements under test -->
+    <div
+      id="styled-box"
+      class="color:red font-size:20px border:2px_solid_powderblue background-color:coral"
+    >
+      Styled box
+    </div>
+    <div
+      id="calc-box"
+      class="width:calc(100%_-_20px) height:calc(50vh_-_10px) padding:10px_20px"
+    >
+      Calc box
+    </div>
+    <div id="border-box" class="border:2px_solid_powderblue">Border box</div>
+
+    <button
+      id="add-btn"
+      onclick="document.body.insertAdjacentHTML('beforeend', `<div id='dynamic-box' class='color:#aaaeae padding:20px_25px width:calc(80%_-_30px)'>dynamic</div>`)"
+    >
+      Add Dynamic Box
+    </button>
+
+    <div id="test-output" class="test-result"></div>
+
+    <!-- External test runner -->
+    <script>
+      function runExternalTests() {
+        const outputEl = document.getElementById("test-output");
+        outputEl.innerHTML = "";
+        const tests = [];
+        const styled = getComputedStyle(document.getElementById("styled-box"));
+        const calcBox = document.getElementById("calc-box");
+        const calcStyle = getComputedStyle(calcBox);
+        const borderBox = document.getElementById("border-box");
+        const borderStyle = getComputedStyle(borderBox);
+
+        tests.push({
+          name: "Styled Box Color",
+          pass: styled.color === "rgb(255, 0, 0)",
+          expected: "rgb(255, 0, 0)",
+          actual: styled.color,
+        });
+        tests.push({
+          name: "Styled Box Font Size",
+          pass: styled.fontSize === "20px",
+          expected: "20px",
+          actual: styled.fontSize,
+        });
+
+        tests.push({
+          name: "Calc Box Width",
+          pass: calcStyle.width.includes("px") && calcStyle.width !== "auto",
+          expected: "width applied (calc result)",
+          actual: calcStyle.width,
+        });
+
+        tests.push({
+          name: "Calc Box Height",
+          pass: calcStyle.height.includes("px") && calcStyle.height !== "auto",
+          expected: "height applied (calc result)",
+          actual: calcStyle.height,
+        });
+
+        tests.push({
+          name: "Border Width",
+          pass: borderStyle.borderWidth === "2px",
+          expected: "2px",
+          actual: borderStyle.borderWidth,
+        });
+        tests.push({
+          name: "Border Style",
+          pass: borderStyle.borderStyle === "solid",
+          expected: "solid",
+          actual: borderStyle.borderStyle,
+        });
+        tests.push({
+          name: "Border Color",
+          pass: borderStyle.borderColor === "rgb(176, 224, 230)",
+          expected: "rgb(176, 224, 230)",
+          actual: borderStyle.borderColor,
+        });
+
+        tests.forEach((t) => {
+          const d = document.createElement("div");
+          d.className = t.pass ? "pass" : "fail";
+          d.textContent = `${t.name}: ${t.pass ? "PASS" : "FAIL"} (expected: ${
+            t.expected
+          }, got: ${t.actual})`;
+          outputEl.appendChild(d);
+        });
+      }
+      window.addEventListener("load", () => setTimeout(runExternalTests, 100));
+    </script>
+  </body>
+</html>
