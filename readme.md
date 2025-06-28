@@ -1,1 +1,1 @@
-cssr
+cascading style sheet runtime (cssr)
