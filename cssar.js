@@ -1,5 +1,5 @@
 (() => {
-  if (document.__cssr_mo) return;
+  if (document.__cssar_mo) return;
 
   let styleElement = document.head.appendChild(document.createElement("style"));
   let generatedTokens = new Set();
@@ -78,7 +78,7 @@
     flushRules();
   };
 
-  document.__cssr_mo = new MutationObserver((mutations) => {
+  document.__cssar_mo = new MutationObserver((mutations) => {
     mutations.forEach((mutation) =>
       mutation.addedNodes.forEach(
         (node) => node.nodeType === 1 && (processNode(node), processTree(node))
@@ -89,7 +89,7 @@
 
   document.addEventListener("DOMContentLoaded", () => {
     processTree(document.body);
-    document.__cssr_mo.observe(document.body, {
+    document.__cssar_mo.observe(document.body, {
       childList: true,
       subtree: true,
     });
