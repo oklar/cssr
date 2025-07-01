@@ -1,15 +1,8 @@
 (() => {
   if (document.__cssr_mo) return;
-  let sheet = document.head.appendChild(document.createElement("style")).sheet;
+  let styleEl = document.head.appendChild(document.createElement("style"));
   let gen = new Set();
-
-  document.__cssr_mo = new MutationObserver((muts) =>
-    muts.forEach((m) =>
-      m.addedNodes.forEach(
-        (n) => n.nodeType === 1 && (processNode(n), processTree(n))
-      )
-    )
-  );
+  let newRules = [];
 
   let processNode = (node) => {
     (node.getAttribute("class") || "")
@@ -27,15 +20,31 @@
         }
 
         let rule = `.${CSS.escape(token)} { ${prop}: ${cssValue}; }`;
-        sheet.insertRule(rule, sheet.cssRules.length);
-
+        newRules.push(rule);
         gen.add(token);
       });
   };
 
-  let processTree = (root) => {
-    root.querySelectorAll('[class*=":"]').forEach(processNode);
+  let updateStyle = () => {
+    if (newRules.length > 0) {
+      styleEl.textContent += "\n" + newRules.join("\n");
+      newRules = [];
+    }
   };
+
+  let processTree = (root) => {
+    root.querySelectorAll('[class*=":"]').forEach((node) => processNode(node));
+    updateStyle();
+  };
+
+  document.__cssr_mo = new MutationObserver((muts) => {
+    muts.forEach((m) =>
+      m.addedNodes.forEach(
+        (n) => n.nodeType === 1 && (processNode(n), processTree(n))
+      )
+    );
+    updateStyle();
+  });
 
   document.addEventListener("DOMContentLoaded", () => {
     processTree(document.body);
