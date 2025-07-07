@@ -23,7 +23,7 @@
     </div>
     <div
       id="calc-box"
-      class="width:calc(100%_-_20px) height:calc(50vh_-_10px) padding:10px_20px"
+      class="width:calc(100%_-_20px) height:calc(10vh_-_10px) padding:10px_20px"
     >
       Calc box
     </div>
@@ -31,7 +31,7 @@
 
     <button
       id="add-btn"
-      onclick="document.body.insertAdjacentHTML('beforeend', `<div id='dynamic-box' class='color:#aaaeae padding:20px_25px width:calc(80%_-_30px)'>dynamic</div>`)"
+      onclick="document.body.insertAdjacentHTML('beforeend', `<div id='dynamic-box' class='color:#aaaeae padding:20px_25px width:calc(80%-30px)'>dynamic</div>`)"
     >
       Add Dynamic Box
     </button>
@@ -39,7 +39,7 @@
     <div id="test-output" class="test-result"></div>
     <br />
     <br />
-    <div class="&_>_div_>_h4:background-color:green">
+    <div class="&>div>h4:background-color:green">
       Title
       <div>
         Subtitle
@@ -47,12 +47,34 @@
       </div>
     </div>
 
-    <div class="&_>_div:background-color:red;color:blue padding:10px_20px">
-      Title
+    <div class="&>div:background-color:red;color:blue padding:10px_20px">
+      Title222
       <div>
-        Subtitle
-        <h4>Subsubtitle</h4>
+        Subtitle222
+        <h4>Subsubtitle222</h4>
       </div>
     </div>
+
+    <div class="padding:10px_20px">
+      <a class="hover:background-color:red;color:blue text-decoration:underline">
+        Test
+        <p>Paragraph 1 in the div.</p>
+        <p>Paragraph 2 in the div.</p>
+        <section><p>Paragraph 3 in the div.</p></section>
+       </a>
+    </div>
+
+    <div class="hover:#submitBtn:background-color:green;color:white">
+      Title222
+      <div>
+        Subtitle222
+        <h4>Subsubtitle222</h4>
+
+        <div id="submitBtn">Submit</div>
+
+      </div>
+    </div>
+    
+
   </body>
 </html>
