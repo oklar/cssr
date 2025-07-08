@@ -2,79 +2,318 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Runtime CSS Generator</title>
-
+    <title>CSSAR Tests</title>
     <style>
-      html,
       body {
-        margin: 0;
-        padding: 0;
+        font-family: sans-serif;
+        padding: 20px;
+      }
+      .result {
+        margin-top: 1em;
+      }
+      button,
+      div,
+      ul,
+      p {
+        margin-bottom: 1em;
+      }
+      #container6,
+      #container14 {
+        width: 200px;
+        border: 1px solid #ccc;
+        padding: 10px;
+      }
+      #container14 {
+        width: 300px;
       }
     </style>
-    <script src="cssar.js"></script>
+
+    <!-- your simplified CSSar loader here -->
+    <script>
+      (() => {
+        if (document.__cssar) return;
+        const styleEl = document.head.appendChild(
+            document.createElement("style")
+          ),
+          seen = new Set(),
+          addRule = (sel, decls, tok) => {
+            if (seen.has(tok)) return;
+            styleEl.textContent += `${sel}{${decls
+              .map(([p, v]) => `${p}:${v};`)
+              .join("")}}`;
+            seen.add(tok);
+          },
+          processToken = (raw) => {
+            // split on ";" for extra declarations
+            const [head, ...more] = raw.split(";"),
+              parts = head.split(":");
+            if (parts.length < 2) return;
+            let idx = 0,
+              sel = "",
+              pseudo = "",
+              decls = [];
+
+            // selector or nested
+            if (parts[idx].startsWith("&")) {
+              sel =
+                "." +
+                CSS.escape(raw) +
+                parts[idx++].slice(1).replace(/_/g, " ").trim();
+            } else if (
+              parts[idx].startsWith("#") ||
+              parts[idx].startsWith(".")
+            ) {
+              sel = parts[idx++];
+            } else {
+              sel = "." + CSS.escape(raw);
+            }
+
+            // optional pseudo‑class
+            const pc = parts[idx];
+            if (
+              [
+                "hover",
+                "active",
+                "focus",
+                "visited",
+                "disabled",
+                "required",
+              ].includes(pc)
+            ) {
+              pseudo = ":" + parts[idx++];
+            }
+
+            // main decl
+            const prop = parts[idx++],
+              val = parts.slice(idx).join(":").replace(/_/g, " ");
+            decls.push([prop, val]);
+
+            // extras
+            more.forEach((x) => {
+              const [p2, ...v2] = x.split(":");
+              if (!p2 || !v2.length) return;
+              decls.push([p2, v2.join(":").replace(/_/g, " ")]);
+            });
+
+            addRule(sel + pseudo, decls, raw);
+          },
+          applyTo = (n) =>
+            (n.className || "")
+              .split(/\s+/)
+              .filter(Boolean)
+              .forEach(processToken),
+          scan = (root) =>
+            root.querySelectorAll('[class*=":"]').forEach(applyTo);
+
+        document.__cssar = new MutationObserver((muts) => {
+          muts.forEach((m) =>
+            m.addedNodes.forEach(
+              (n) => n.nodeType === 1 && (applyTo(n), scan(n))
+            )
+          );
+        });
+
+        window.addEventListener("DOMContentLoaded", () => {
+          scan(document.body);
+          document.__cssar.observe(document.body, {
+            childList: true,
+            subtree: true,
+          });
+        });
+      })();
+    </script>
   </head>
   <body>
-    <div
-      id="styled-box"
-      class="color:red font-size:20px border:2px_solid_powderblue background-color:coral"
-    >
-      Styled box
-    </div>
-    <div
-      id="calc-box"
-      class="width:calc(100%_-_20px) height:calc(10vh_-_10px) padding:10px_20px"
-    >
-      Calc box
-    </div>
-    <div id="border-box" class="border:2px_solid_powderblue">Border box</div>
+    <h2>CSSAR Tests</h2>
 
-    <button
-      id="add-btn"
-      onclick="document.body.insertAdjacentHTML('beforeend', `<div id='dynamic-box' class='color:#aaaeae padding:20px_25px width:calc(80%-30px)'>dynamic</div>`)"
-    >
-      Add Dynamic Box
-    </button>
+    <div id="test1" class="color:blue">Test 1: blue text</div>
 
-    <div id="test-output" class="test-result"></div>
-    <br />
-    <br />
-    <div class="&>div>h4:background-color:green">
-      Title
-      <div>
-        Subtitle
-        <h4>Subsubtitle</h4>
+    <div id="test2" class="margin:5px_10px_15px_20px">
+      Test 2: margins 5/10/15/20
+    </div>
+
+    <div id="test3" class="padding:10px_20px">Test 3: padding-left = 20px</div>
+
+    <ul id="wrapper4" class="&>li:color:orange">
+      <li>Item A</li>
+      <li id="test4">Test 4: orange</li>
+    </ul>
+
+    <div class="#special:background-color:lightgray">
+      <p id="special">Test 5: lightgray bg</p>
+    </div>
+
+    <div id="container6">
+      <div id="test6" class="width:calc(50%-20px);border:1px_solid_black;">
+        Test 6: width = calc(50% - 20px)
       </div>
     </div>
 
-    <div class="&>div:background-color:red;color:blue padding:10px_20px">
-      Title222
-      <div>
-        Subtitle222
-        <h4>Subsubtitle222</h4>
-      </div>
+    <div id="wrapper7" class="&>button+_button:margin-left:10px">
+      <button id="b71">One</button>
+      <button id="test7">Test 7: margin-left 10px</button>
     </div>
 
-    <div class="padding:10px_20px">
-      <a class="hover:background-color:red;color:blue text-decoration:underline">
-        Test
-        <p>Paragraph 1 in the div.</p>
-        <p>Paragraph 2 in the div.</p>
-        <section><p>Paragraph 3 in the div.</p></section>
-       </a>
+    <div id="test8" class="color:red;background-color:lightblue">
+      Test 8: red on lightblue
     </div>
 
-    <div class="hover:#submitBtn:background-color:green;color:white">
-      Title222
-      <div>
-        Subtitle222
-        <h4>Subsubtitle222</h4>
-
-        <div id="submitBtn">Submit</div>
-
-      </div>
+    <div id="wrapper9" class="&>h3~_p:font-style:italic">
+      <h3>Heading</h3>
+      <p id="test9">Test 9: italic</p>
     </div>
-    
 
+    <div id="wrapper10" class="& h4:font-weight:bold">
+      <h4 id="test10">Test 10: bold</h4>
+    </div>
+
+    <!-- Specificity Tests -->
+    <div id="spec1-wrapper" class=".cls:color:red &_h4:color:green">
+      <h4 id="spec1">Spec 1: nested should override → green</h4>
+    </div>
+
+    <div id="spec2-wrapper" class=".cls2:color:purple #spec2:color:pink">
+      <p id="spec2">Spec 2: ID should override class → pink</p>
+    </div>
+
+    <p id="spec3" class=".some:color:orange" style="color: navy">
+      Spec 3: inline-style should override loader → navy
+    </p>
+
+    <div id="spec4" class="color:red color:blue">
+      Spec 4: last declaration wins → blue
+    </div>
+
+    <div class="result" id="results"></div>
+
+    <script>
+      window.addEventListener("load", () => {
+        const results = [];
+        const check = (id, actual, expected) => ({
+          id,
+          actual,
+          expected,
+          pass: actual === expected,
+        });
+
+        results.push(
+          check(
+            "test1",
+            getComputedStyle(document.getElementById("test1")).color,
+            "rgb(0, 0, 255)"
+          )
+        );
+
+        const m2 = getComputedStyle(document.getElementById("test2"));
+        results.push(check("test2-top", m2.marginTop, "5px"));
+        results.push(check("test2-right", m2.marginRight, "10px"));
+        results.push(check("test2-bottom", m2.marginBottom, "15px"));
+        results.push(check("test2-left", m2.marginLeft, "20px"));
+
+        results.push(
+          check(
+            "test3",
+            getComputedStyle(document.getElementById("test3")).paddingLeft,
+            "20px"
+          )
+        );
+        results.push(
+          check(
+            "test4",
+            getComputedStyle(document.getElementById("test4")).color,
+            "rgb(255, 165, 0)"
+          )
+        );
+        results.push(
+          check(
+            "test5",
+            getComputedStyle(document.getElementById("special"))
+              .backgroundColor,
+            "rgb(211, 211, 211)"
+          )
+        );
+        results.push(
+          check(
+            "test6",
+            getComputedStyle(document.getElementById("test6")).width,
+            "80px"
+          )
+        );
+        results.push(
+          check(
+            "test7",
+            getComputedStyle(document.getElementById("test7")).marginLeft,
+            "10px"
+          )
+        );
+        results.push(
+          check(
+            "test8-color",
+            getComputedStyle(document.getElementById("test8")).color,
+            "rgb(255, 0, 0)"
+          )
+        );
+        results.push(
+          check(
+            "test8-bg",
+            getComputedStyle(document.getElementById("test8")).backgroundColor,
+            "rgb(173, 216, 230)"
+          )
+        );
+        results.push(
+          check(
+            "test9",
+            getComputedStyle(document.getElementById("test9")).fontStyle,
+            "italic"
+          )
+        );
+        results.push(
+          check(
+            "test10",
+            getComputedStyle(document.getElementById("test10")).fontWeight,
+            "700"
+          )
+        );
+
+        results.push(
+          check(
+            "spec1",
+            getComputedStyle(document.getElementById("spec1")).color,
+            "rgb(0, 128, 0)"
+          )
+        );
+        results.push(
+          check(
+            "spec2",
+            getComputedStyle(document.getElementById("spec2")).color,
+            "rgb(255, 192, 203)"
+          )
+        );
+        results.push(
+          check(
+            "spec3",
+            getComputedStyle(document.getElementById("spec3")).color,
+            "rgb(0, 0, 128)"
+          )
+        );
+        results.push(
+          check(
+            "spec4",
+            getComputedStyle(document.getElementById("spec4")).color,
+            "rgb(0, 0, 255)"
+          )
+        );
+
+        document.getElementById("results").innerHTML = results
+          .map(
+            (r) =>
+              `<div>${r.id}: expected <code>${r.expected}</code>, got <code>${
+                r.actual
+              }</code> — <strong>${r.pass ? "PASS" : "FAIL"}</strong></div>`
+          )
+          .join("");
+        results.forEach((r) => console.assert(r.pass, `${r.id} failed`));
+      });
+    </script>
   </body>
 </html>
